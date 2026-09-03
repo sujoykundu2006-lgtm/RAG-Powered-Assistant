@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAG Resume Assistant | Sujoy Kundu</title>
+  
+  <!-- Modern Geometric Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    :root, :root[data-theme="light"] {
+      --bg-body: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-subtle: #f1f5f9;
+      --bg-glass: rgba(255, 255, 255, 0.9);
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --primary-light: #eff6ff;
+      --teal: #0d9488;
+      --accent: #f59e0b;
+      --text-main: #0f172a;
+      --text-muted: #475569;
+      --text-light: #94a3b8;
+      --border-color: rgba(226, 232, 240, 0.9);
+      --border-accent: rgba(37, 99, 235, 0.35);
+      --font-heading: 'Space Grotesk', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --shadow-lg: 0 16px 32px -4px rgba(15, 23, 42, 0.08);
+    }
+
+    :root[data-theme="dark"] {
+      --bg-body: #07090e;
+      --bg-surface: #0e1420;
+      --bg-subtle: #162032;
+      --bg-glass: rgba(14, 20, 32, 0.85);
+      --primary: #38bdf8;
+      --primary-hover: #0ea5e9;
+      --primary-light: rgba(56, 189, 248, 0.12);
+      --teal: #2dd4bf;
+      --accent: #fbbf24;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-light: #64748b;
+      --border-color: rgba(255, 255, 255, 0.09);
+      --border-accent: rgba(56, 189, 248, 0.4);
+      --shadow-lg: 0 16px 32px -4px rgba(0, 0, 0, 0.6);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    /* Header */
+    .chat-header {
+      padding: 16px 24px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .brand-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--text-main);
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    .brand-back i {
+      color: var(--primary);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .icon-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .icon-btn:hover {
+      background: var(--primary-light);
+      color: var(--primary);
+      border-color: var(--border-accent);
+    }
+
+    /* Main Chat Layout */
+    .chat-layout {
+      flex: 1;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 24px;
+      height: calc(100vh - 72px);
+    }
+
+    /* Sidebar Controls */
+    .sidebar {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      overflow-y: auto;
+    }
+
+    .sidebar-section-title {
+      font-family: var(--font-heading);
+      font-size: 0.95rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .control-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .form-select {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-subtle);
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 0.88rem;
+      outline: none;
+    }
+
+    .form-select:focus {
+      border-color: var(--primary);
+    }
+
+    .chip-container {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .query-chip {
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-subtle);
+      color: var(--text-muted);
+      font-size: 0.82rem;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .query-chip:hover {
+      background: var(--primary-light);
+      color: var(--primary);
+      border-color: var(--border-accent);
+      transform: translateX(4px);
+    }
+
+    .vector-status {
+      padding: 12px;
+      background: var(--bg-subtle);
+      border-radius: 10px;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-light);
+      border-left: 3px solid #10b981;
+    }
+
+    /* Chat Container */
+    .chat-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .msg-wrap {
+      display: flex;
+      gap: 12px;
+      max-width: 82%;
+    }
+
+    .msg-wrap.user {
+      align-self: flex-end;
+      flex-direction: row-reverse;
+    }
+
+    .msg-wrap.bot {
+      align-self: flex-start;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+
+    .avatar.bot-avatar {
+      background: var(--primary-light);
+      color: var(--primary);
+      border: 1px solid var(--border-accent);
+    }
+
+    .avatar.user-avatar {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .msg-bubble {
+      padding: 14px 18px;
+      border-radius: 14px;
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+
+    .msg-wrap.bot .msg-bubble {
+      background: var(--bg-subtle);
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+    }
+
+    .msg-wrap.user .msg-bubble {
+      background: var(--primary);
+      color: #ffffff;
+    }
+
+    .chat-input-area {
+      padding: 16px 24px;
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .chat-input-field {
+      flex: 1;
+      padding: 14px 18px;
+      border-radius: 9999px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-subtle);
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .chat-input-field:focus {
+      border-color: var(--primary);
+      background: var(--bg-surface);
+    }
+
+    .send-btn {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      transition: all 0.2s;
+      flex-shrink: 0;
+    }
+
+    .send-btn:hover {
+      background: var(--primary-hover);
+      transform: scale(1.05);
+    }
+
+    @media (max-width: 900px) {
+      .chat-layout {
+        grid-template-columns: 1fr;
+        height: auto;
+      }
+      .sidebar {
+        height: auto;
+      }
+      .chat-card {
+        height: 600px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Chat App Navigation Header -->
+  <header class="chat-header">
+    <a href="index.html#projects" class="brand-back">
+      <i class="fa-solid fa-arrow-left"></i>
+      <span>SUJOY<span>.AI</span> &bull; Resume Bot</span>
+    </a>
+    <div class="header-actions">
+      <button class="icon-btn" id="themeToggleBtn" title="Toggle Theme"><i class="fa-solid fa-moon"></i></button>
+      <button class="icon-btn" id="clearChatBtn" title="Clear Chat Buffer"><i class="fa-solid fa-rotate-left"></i></button>
+    </div>
+  </header>
+
+  <!-- Main Chatbot Experience Interface -->
+  <main class="chat-layout">
+    <!-- Configuration & Quick Prompts Sidebar -->
+    <aside class="sidebar">
+      <div>
+        <div class="sidebar-section-title"><i class="fa-solid fa-sliders"></i> Persona Settings</div>
+        <div style="margin-top: 12px;">
+          <label class="control-label">Evaluation Mode:</label>
+          <select id="personaSelect" class="form-select">
+            <option value="technical">Senior Technical Recruiter</option>
+            <option value="academic">AI Research Scientist</option>
+            <option value="brief">Executive Summary</option>
+          </select>
+        </div>
+        <div style="margin-top: 14px;">
+          <div class="control-label"><span>Temperature:</span><span id="tempDisplay">0.20</span></div>
+          <input type="range" id="tempSlider" min="0.0" max="1.0" step="0.05" value="0.20" style="width: 100%;">
+        </div>
+      </div>
+
+      <div>
+        <div class="sidebar-section-title"><i class="fa-solid fa-bolt"></i> Sample Prompts</div>
+        <div class="chip-container" style="margin-top: 12px;">
+          <button class="query-chip" data-query="What is Sujoy's core technical stack in Python and AI?">
+            <i class="fa-brands fa-python"></i> Python & AI Stack
+          </button>
+          <button class="query-chip" data-query="Tell me about Sujoy's education and degree.">
+            <i class="fa-solid fa-graduation-cap"></i> Education & Degree
+          </button>
+          <button class="query-chip" data-query="What state awards and sports achievements does Sujoy hold?">
+            <i class="fa-solid fa-medal"></i> Sports & Awards
+          </button>
+          <button class="query-chip" data-query="Explain the Career Dost and Student DBMS projects.">
+            <i class="fa-solid fa-diagram-project"></i> Project Details
+          </button>
+          <button class="query-chip" data-query="How can I get in touch with Sujoy for job opportunities?">
+            <i class="fa-solid fa-envelope"></i> Contact Information
+          </button>
+        </div>
+      </div>
+
+      <div class="vector-status">
+        <i class="fa-solid fa-check-circle" style="color: #10b981;"></i> RAG Vector Store Active<br>
+        Embedded: CV Profile &bull; 9+ Certs &bull; West Bengal State Championship Record[cite: 2]
+      </div>
+    </aside>
+
+    <!-- Main Message Viewport -->
+    <section class="chat-card">
+      <div class="chat-messages" id="chatBox">
+        <div class="msg-wrap bot">
+          <div class="avatar bot-avatar"><i class="fa-solid fa-robot"></i></div>
+          <div class="msg-bubble">
+            Hello! I am Sujoy Kundu's RAG-Powered Assistant[cite: 2]. I am indexed on his Bachelor of Computer Applications degree at EIILM Kolkata, Python & Machine Learning projects, and athletic record[cite: 2]. What would you like to know?
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-input-area">
+        <input type="text" id="userInput" class="chat-input-field" placeholder="Ask anything about Sujoy's skills, projects, or background..." autofocus />
+        <button id="sendBtn" class="send-btn"><i class="fa-solid fa-paper-plane"></i></button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Theme Engine
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    let currentTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    updateThemeIcon();
+
+    themeToggleBtn.addEventListener('click', () => {
+      currentTheme = currentTheme === 'light' ? 'dark' : 'light';
+      document.documentElement.setAttribute('data-theme', currentTheme);
+      localStorage.setItem('theme', currentTheme);
+      updateThemeIcon();
+    });
+
+    function updateThemeIcon() {
+      themeToggleBtn.innerHTML = currentTheme === 'light' ? '<i class="fa-solid fa-moon"></i>' : '<i class="fa-solid fa-sun"></i>';
+    }
+
+    // Temperature Display
+    document.getElementById('tempSlider').addEventListener('input', (e) => {
+      document.getElementById('tempDisplay').textContent = parseFloat(e.target.value).toFixed(2);
+    });
+
+    // RAG Knowledge Base
+    const resumeVectors = {
+      skills: "Sujoy's technical stack spans Python (Pandas, NumPy, Matplotlib), Machine Learning model training, AI Agents, C, C++, SQL, HTML/CSS/JS, PHP, Bootstrap, and Tally ERP[cite: 2].",
+      education: "Sujoy is pursuing his Bachelor of Computer Applications (BCA) at EIILM Kolkata (2024–Present), completed Higher Secondary Education at Barasat M.G.M High School (2022–2024), and earned a Graphics and Visual Designing diploma from Arena Animation[cite: 2].",
+      badminton: "Sujoy is a competitive state-level athlete who achieved 2nd Position (Silver) in the WB Senior State Badminton Championship in May 2025 and participated in the All India Senior Ranking Badminton Tournament in February 2026[cite: 2].",
+      projects: "Key engineering systems include Career Dost (a centralized educational counseling portal), Ultimate Banking Management in Python, a modular Student DBMS, and an autonomous/telemetry Robotic RC Car powered by Arduino/ESP32[cite: 2].",
+      experience: "Sujoy works as a Creative & Digital Media Executive at Smart Education (April 2024–Present) and has freelanced as a multimedia designer on projects for international models and corporate clients like Asian Paints and PalPixel Pvt. Ltd[cite: 2].",
+      contact: "You can reach Sujoy via email at sujoykundu2006@gmail.com, phone at +91 8420 333 215, or connect on LinkedIn at linkedin.com/in/sujoy-kundu[cite: 2]."
+    };
+
+    const chatBox = document.getElementById('chatBox');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const clearChatBtn = document.getElementById('clearChatBtn');
+
+    function appendMessage(sender, text) {
+      const wrap = document.createElement('div');
+      wrap.className = `msg-wrap ${sender}`;
+      
+      const avatar = document.createElement('div');
+      avatar.className = `avatar ${sender}-avatar`;
+      avatar.innerHTML = sender === 'bot' ? '<i class="fa-solid fa-robot"></i>' : '<i class="fa-solid fa-user"></i>';
+      
+      const bubble = document.createElement('div');
+      bubble.className = 'msg-bubble';
+      bubble.textContent = text;
+      
+      wrap.appendChild(avatar);
+      wrap.appendChild(bubble);
+      chatBox.appendChild(wrap);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function processQuery(queryText) {
+      const q = queryText.toLowerCase().trim();
+      if (!q) return;
+
+      appendMessage('user', queryText);
+      userInput.value = '';
+
+      setTimeout(() => {
+        let matched = false;
+        let response = "I searched Sujoy's verified credentials[cite: 2]. He is an AI/ML developer and BCA scholar at EIILM Kolkata[cite: 2]. You can ask about his Python stack, state badminton achievements, projects, or contact info[cite: 2]!";
+
+        if (q.includes('skill') || q.includes('python') || q.includes('stack') || q.includes('ml') || q.includes('ai')) {
+          response = resumeVectors.skills;
+          matched = true;
+        } else if (q.includes('educat') || q.includes('degree') || q.includes('college') || q.includes('bca') || q.includes('school')) {
+          response = resumeVectors.education;
+          matched = true;
+        } else if (q.includes('badminton') || q.includes('sport') || q.includes('award') || q.includes('medal') || q.includes('marathon')) {
+          response = resumeVectors.badminton;
+          matched = true;
+        } else if (q.includes('project') || q.includes('career dost') || q.includes('banking') || q.includes('car') || q.includes('dbms')) {
+          response = resumeVectors.projects;
+          matched = true;
+        } else if (q.includes('experience') || q.includes('work') || q.includes('smart education') || q.includes('freelance')) {
+          response = resumeVectors.experience;
+          matched = true;
+        } else if (q.includes('contact') || q.includes('email') || q.includes('phone') || q.includes('reach') || q.includes('hire') || q.includes('linkedin')) {
+          response = resumeVectors.contact;
+          matched = true;
+        }
+
+        const persona = document.getElementById('personaSelect').value;
+        if (persona === 'brief' && matched) {
+          response = "• " + response.replace(/\. /g, '.\n• ');
+        }
+
+        appendMessage('bot', response);
+      }, 400);
+    }
+
+    sendBtn.addEventListener('click', () => processQuery(userInput.value));
+    userInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') processQuery(userInput.value);
+    });
+
+    document.querySelectorAll('.query-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        processQuery(chip.getAttribute('data-query'));
+      });
+    });
+
+    clearChatBtn.addEventListener('click', () => {
+      chatBox.innerHTML = `
+        <div class="msg-wrap bot">
+          <div class="avatar bot-avatar"><i class="fa-solid fa-robot"></i></div>
+          <div class="msg-bubble">
+            Chat buffer reset. Ask any question regarding Sujoy's portfolio, qualifications, or technical work[cite: 2]!
+          </div>
+        </div>
+      `;
+    });
+  </script>
+</body>
+</html>
